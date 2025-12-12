@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Новогодняя Елочка для Коллег!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #282c34; /* Темно-серый фон */
+            color: white;
+            margin: 0;
+            overflow: hidden; /* Важно для снежинок/хлопушек, чтобы они не создавали скролл */
+        }
+
+        /* Контейнер для динамических эффектов (снег, хлопушки, фейерверки) */
+        #effect-container {
+            position: fixed; /* Чтобы покрывало весь экран */
+            top: 0;
+            left: 0;
+            width: 100vw; /* Ширина viewport */
+            height: 100vh; /* Высота viewport */
+            pointer-events: none; /* Чтобы элементы эффектов не мешали кликам */
+            overflow: hidden; /* Чтобы снежинки/хлопушки не выходили за экран */
+            z-index: 10; /* Поверх всего остального, кроме кнопки и сообщения */
+        }
+
+        .tree-container {
+            position: relative;
+            width: 300px; /* Ширина вашей ёлочки */
+            height: 400px; /* Высота вашей ёлочки */
+            margin-bottom: 30px;
+            /* background-color: rgba(255, 255, 255, 0.1); /* Для отладки, потом можно удалить */
+        }
+        .tree {
+            width: 0;
+            height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-bottom: 300px solid green;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1; /* Елка на заднем плане */
+        }
+        .star {
+            position: absolute;
+            top: -20px; /* Поднимите звезду выше верхушки елки */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background-color: yellow;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            z-index: 3; /* Звезда поверх всего */
+        }
+        .ball {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            transition: filter 0.1s ease-in-out, transform 0.1s ease-in-out;
+            z-index: 2;
+            border: 2px solid rgba(255,255,255,0.7);
+            box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+        /* Расположение и цвета шаров (Вариант 1) */
+        .ball:nth-child(1) { top: 80px; left: 130px; background-color: #e74c3c; } /* Alizarin Red */
+        .ball:nth-child(2) { top: 140px; left: 190px; background-color: #3498db; } /* Belize Hole Blue */
+        .ball:nth-child(3) { top: 200px; left: 80px; background-color: #f1c40f; } /* Sunflower Yellow */
+        .ball:nth-child(4) { top: 260px; left: 220px; background-color: #9b59b6; } /* Amethyst Purple */
+        .ball:nth-child(5) { top: 320px; left: 150px; background-color: #1abc9c; } /* Turquoise Green */
+        .ball:nth-child(6) { top: 110px; left: 70px; background-color: #d35400; } /* Pumpkin Orange */
+        .ball:nth-child(7) { top: 170px; left: 240px; background-color: #2c3e50; } /* Midnight Blue */
+        .ball:nth-child(8) { top: 230px; left: 120px; background-color: #c0392b; } /* Pomegranate Red */
+        .ball:nth-child(9) { top: 290px; left: 60px; background-color: #27ae60; } /* Nephritis Green */
+        .ball:nth-child(10) { top: 350px; left: 200px; background-color: #8e44ad; } /* Wisteria Purple */
+
+        .ball.active {
+            filter: brightness(1.8);
+            transform: scale(1.1);
+        }
+
+        /* ----- Гирлянда ----- */
+        @keyframes garlandBlink {
+            0%, 100% { opacity: 1; box-shadow: 0 0 8px currentColor; }
+            50% { opacity: 0.3; box-shadow: none; }
+        }
+
+        .light {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: white; /* Базовый цвет */
+            z-index: 2; /* Поверх елки, под звездой */
+            animation: garlandBlink 1.5s infinite alternate; /* Базовая анимация */
+        }
+
+        /* Цвета для гирлянды */
+        .light-red { background-color: #e74c3c; }
+        .light-yellow { background-color: #f1c40f; }
+        .light-blue { background-color: #3498db; }
+        .light-green { background-color: #2ecc71; }
+
+        /* Расположение лампочек гирлянды (очень важно настроить вручную!) */
+        .garland .light:nth-child(1) { top: 60px; left: 140px; animation-delay: 0s; }
+        .garland .light:nth-child(2) { top: 90px; left: 110px; animation-delay: 0.1s; }
+        .garland .light:nth-child(3) { top: 120px; left: 180px; animation-delay: 0.2s; }
+        .garland .light:nth-child(4) { top: 150px; left: 90px; animation-delay: 0.3s; }
+        .garland .light:nth-child(5) { top: 180px; left: 210px; animation-delay: 0.4s; }
+        .garland .light:nth-child(6) { top: 210px; left: 70px; animation-delay: 0.5s; }
+        .garland .light:nth-child(7) { top: 240px; left: 230px; animation-delay: 0.6s; }
+        .garland .light:nth-child(8) { top: 270px; left: 100px; animation-delay: 0.7s; }
+        .garland .light:nth-child(9) { top: 300px; left: 200px; animation-delay: 0.8s; }
+        .garland .light:nth-child(10) { top: 330px; left: 130px; animation-delay: 0.9s; }
+        .garland .light:nth-child(11) { top: 360px; left: 170px; animation-delay: 1s; }
+        .garland .light:nth-child(12) { top: 380px; left: 160px; animation-delay: 1.1s; }
+
+        /* ----- Хлопушки ----- */
+        @keyframes confettiFall {
+            0% { transform: translate(-50%, -100%) rotate(0deg); opacity: 1; }
+            100% { transform: translate(-50%, 100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00; /* Будет случайным */
+            border-radius: 2px;
+            animation: confettiFall 3s ease-in forwards;
+            left: 50%;
+            top: 0;
+        }
+
+        /* ----- Снежинки ----- */
+        @keyframes snowflakeFall {
+            0% { transform: translateY(-100%); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        .snowflake {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: snowflakeFall linear infinite;
+            z-index: 9;
+            top: 0;
+        }
+
+        /* ----- Фейерверк ----- */
+        .firework-particle {
+            position: absolute;
+            width: 6px; /* Размер частицы */
+            height: 6px;
+            background-color: yellow; /* Будет случайным цветом */
+            border-radius: 50%; /* Круглая частица */
+            opacity: 0; /* Изначально невидима */
+            transform: translate(-50%, -50%); /* Центрирование по точке спавна */
+            z-index: 11; /* Выше хлопушек */
+        }
+
+        /* Анимация "вспышки" фейерверка */
+        @keyframes fireworkBurst {
+            0% { transform: scale(0) translate(-50%, -50%); opacity: 0; }
+            10% { transform: scale(1) translate(-50%, -50%); opacity: 1; } /* Вспышка */
+            100% { transform: scale(0.2) translate(-50%, -50%); opacity: 0; } /* Угасание */
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            z-index: 100; /* Чтобы кнопка была поверх всего */
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #message {
+            margin-top: 40px;
+            font-size: 24px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            z-index: 100; /* Чтобы сообщение было поверх всего */
+        }
+        #message.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="effect-container"></div> <!-- Контейнер для снежинок, хлопушек и фейерверков -->
+
+    <h1>🎉 С Наступающим Новым Годом, коллеги! 🎉</h1>
+
+    <div class="tree-container">
+        <div class="tree"></div>
+        <div class="star"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <!-- Добавьте больше шаров, если нужно, используя классы ball-1, ball-2 и т.д. -->
+
+        <div class="garland">
+            <div class="light light-red"></div>
+            <div class="light light-yellow"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+            <div class="light light-red"></div>
+            <div class="light light-yellow"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+            <div class="light light-red"></div>
+            <div class="light light-yellow"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+            <div class="light light-red"></div>
+            <div class="light light-yellow"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+            <!-- Добавьте больше лампочек для длинной гирлянды -->
+        </div>
+    </div>
+
+    <button id="activateButton">Нажми, чтобы Елочка засияла!</button>
+
+    <h2 id="message">Желаем счастья, успехов и самых ярких моментов в Новом Году!</h2>
+
+    <audio id="christmasMusic" src="jingle_bell_rock.mp3" preload="auto"></audio>
+
+    <script>
+        const activateButton = document.getElementById('activateButton');
+        const christmasMusic = document.getElementById('christmasMusic');
+        const balls = document.querySelectorAll('.ball');
+        const message = document.getElementById('message');
+
+        let isPlaying = false;
+        let blinkInterval;
+        let messageTimeout;
+        let confettiInterval;
+        let snowInterval;
+        let fireworkInterval; // Изменил с fireworkTimeout на fireworkInterval
+        const effectContainer = document.getElementById('effect-container');
+        const colors = ['#e74c3c', '#f1c40f', '#3498db', '#2ecc71', '#9b59b6']; // Цвета для хлопушек
+        const fireworkColors = ['#FFD700', '#FF6347', '#8A2BE2', '#00FFFF', '#FF00FF', '#00FF00']; // Цвета для фейерверка
+
+        function startCelebration() {
+            if (isPlaying) return;
+
+            isPlaying = true;
+            christmasMusic.currentTime = 0;
+            christmasMusic.play().catch(e => console.error("Ошибка воспроизведения звука:", e));
+
+            blinkInterval = setInterval(() => {
+                balls.forEach(ball => {
+                    if (Math.random() > 0.5) {
+                        ball.classList.add('active');
+                    } else {
+                        ball.classList.remove('active');
+                    }
+                });
+            }, 250);
+
+            messageTimeout = setTimeout(() => {
+                message.classList.add('show');
+            }, 3000);
+
+            activateButton.textContent = "Елочка сияет! Нажми ESC, чтобы остановить.";
+            activateButton.disabled = true;
+
+            document.addEventListener('keydown', stopOnEsc);
+
+            startConfetti();
+            startSnow();
+            startFireworks(); // Запуск фейерверка!
+        }
+
+        function stopCelebration() {
+            if (!isPlaying) return;
+
+            isPlaying = false;
+            christmasMusic.pause();
+            clearInterval(blinkInterval);
+            clearTimeout(messageTimeout);
+            balls.forEach(ball => ball.classList.remove('active'));
+            message.classList.remove('show');
+
+            activateButton.textContent = "Нажми, чтобы Елочка засияла!";
+            activateButton.disabled = false;
+
+            document.removeEventListener('keydown', stopOnEsc);
+
+            stopConfetti();
+            stopSnow();
+            stopFireworks(); // Остановка фейерверка!
+        }
+
+        function stopOnEsc(event) {
+            if (event.key === 'Escape') {
+                stopCelebration();
+            }
+        }
+
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.classList.add('confetti');
+            confetti.style.left = `${Math.random() * 100}%`;
+            confetti.style.top = `${Math.random() * -20}%`;
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDuration = `${2 + Math.random() * 2}s`;
+            confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+
+            effectContainer.appendChild(confetti);
+
+            confetti.addEventListener('animationend', () => {
+                confetti.remove();
+            });
+        }
+
+        function startConfetti() {
+            for (let i = 0; i < 50; i++) {setTimeout(createConfetti, Math.random() * 1000);
+            }
+            confettiInterval = setInterval(createConfetti, 100);
+        }
+
+        function stopConfetti() {
+            clearInterval(confettiInterval);
+            effectContainer.querySelectorAll('.confetti').forEach(c => c.remove());
+        }
+
+        function createSnowflake() {
+            const snowflake = document.createElement('div');
+            snowflake.classList.add('snowflake');
+            snowflake.style.left = `${Math.random() * 100}%`;
+            snowflake.style.animationDuration = `${5 + Math.random() * 5}s`;
+            snowflake.style.animationDelay = `-${Math.random() * 5}s`;
+            snowflake.style.opacity = `${0.5 + Math.random() * 0.5}`;
+            snowflake.style.transform = `scale(${0.5 + Math.random() * 0.5})`;
+
+            effectContainer.appendChild(snowflake);
+
+            snowflake.addEventListener('animationend', () => {
+                snowflake.remove();
+            });
+        }
+
+        function startSnow() {
+            snowInterval = setInterval(createSnowflake, 150);
+        }
+
+        function stopSnow() {
+            clearInterval(snowInterval);
+            effectContainer.querySelectorAll('.snowflake').forEach(s => s.remove());
+        }
+
+        // --- Функции для Фейерверка ---
+        function createFirework(x, y) {
+            const numParticles = 30;
+            const fireworkColor = fireworkColors[Math.floor(Math.random() * fireworkColors.length)];
+
+            // Вспышка в центре фейерверка
+            const flash = document.createElement('div');
+            flash.classList.add('firework-particle');
+            flash.style.backgroundColor = fireworkColor;
+            flash.style.left = `${x}px`;
+            flash.style.top = `${y}px`;
+            flash.style.animation = `fireworkBurst 0.5s ease-out forwards`;
+            effectContainer.appendChild(flash);
+            flash.addEventListener('animationend', () => flash.remove());
+
+            for (let i = 0; i < numParticles; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('firework-particle');
+                particle.style.backgroundColor = fireworkColor;
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 50 + Math.random() * 70;
+
+                const targetX = x + distance * Math.cos(angle);
+                const targetY = y + distance * Math.sin(angle);
+
+                // Динамическое создание CSS-правила для анимации частицы
+                // Используем уникальное имя для каждой анимации, чтобы избежать конфликтов
+                const animName = `particleAnim_${Date.now()}_${i}`;
+                const keyframes = `
+                    @keyframes ${animName} {
+                        0% { transform: translate(-50%, -50%); opacity: 1; }
+                        100% { transform: translate(-50%, -50%) translate(${targetX - x}px, ${targetY - y}px); opacity: 0; }
+                    }
+                `;
+                const styleSheet = document.styleSheets[0];
+                styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+
+                particle.style.animation = `${animName} ${1 + Math.random()}s ease-out forwards`;
+                particle.style.animationDelay = `${Math.random() * 0.2}s`;
+
+                effectContainer.appendChild(particle);
+
+                particle.addEventListener('animationend', () => particle.remove());
+            }
+        }
+
+        function startFireworks() {
+            fireworkInterval = setInterval(() => {
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight * 0.6; // Фейерверки в верхней части экрана
+                createFirework(x, y);
+            }, 1500); // Новый фейерверк каждые 1.5 секунды
+        }
+
+        function stopFireworks() {
+            clearInterval(fireworkInterval);
+            effectContainer.querySelectorAll('.firework-particle').forEach(p => p.remove());
+            // Дополнительно удаляем динамически созданные @keyframes правила, если их много,
+            // но для коротких анимаций это не обязательно
+        }
+
+
+        // Активация по нажатию кнопки
+        activateButton.addEventListener('click', startCelebration);
+
+        // Активация по комбинации Ctrl+9
+        document.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.key === '9') {
+                event.preventDefault();
+                startCelebration();
+            }
+        });
+
+        // Остановка музыки, когда она заканчивается сама (по желанию можно зациклить)
+        christmasMusic.addEventListener('ended', () => {
+            console.log("Музыка закончилась.");
+            // stopCelebration(); // Если нужно остановить все
+            // christmasMusic.currentTime = 0; // Для зацикливания музыки
+            // christmasMusic.play().catch(e => console.error("Ошибка зацикливания:", e));
+        });
+
+        console.log("Страница загружена. Нажмите кнопку или Ctrl+9!");
+
+    </script>
+</body>
+</html>

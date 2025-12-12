@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Новогодняя Елочка для Коллег!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #282c34; /* Темно-серый фон */
+            color: white;
+            margin: 0;
+            overflow: hidden; /* Важно для снежинок/хлопушек, чтобы они не создавали скролл */
+        }
+
+        /* Контейнер для динамических эффектов (снег, хлопушки) */
+        #effect-container {
+            position: fixed; /* Чтобы покрывало весь экран */
+            top: 0;
+            left: 0;
+            width: 100vw; /* Ширина viewport */
+            height: 100vh; /* Высота viewport */
+            pointer-events: none; /* Чтобы элементы эффектов не мешали кликам */
+            overflow: hidden; /* Чтобы снежинки/хлопушки не выходили за экран */
+            z-index: 10; /* Поверх всего остального */
+        }
+
+        .tree-container {
+            position: relative;
+            width: 300px; /* Ширина вашей ёлочки */
+            height: 400px; /* Высота вашей ёлочки */
+            margin-bottom: 30px;
+            /* background-color: rgba(255, 255, 255, 0.1); /* Для отладки, потом можно удалить */
+        }
+        .tree {
+            width: 0;
+            height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-bottom: 300px solid green;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1; /* Елка на заднем плане */
+        }
+        .star {
+            position: absolute;
+            top: 65px; /* Поднимите звезду выше верхушки елки */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            background-color: yellow;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            z-index: 3; /* Звезда поверх всего */
+        }
+        .ball {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            transition: filter 0.1s ease-in-out, transform 0.1s ease-in-out; /* Плавное мигание и легкое масштабирование */
+            z-index: 2; /* Шары поверх елки */
+            border: 2px solid rgba(255,255,255,0.7); /* Обводка для шаров */
+            box-shadow: 0 0 5px rgba(0,0,0,0.5); /* Тень для объема */
+        }
+        .ball:nth-child(1) { top: 80px; left: 130px; background-color: #e74c3c; } /* Красный */
+        .ball:nth-child(2) { top: 140px; left: 190px; background-color: #3498db; } /* Синий */
+        .ball:nth-child(3) { top: 342px; left: 52px; background-color: #f1c40f; } /* Желтый */
+        .ball:nth-child(4) { top: 351px; left: 220px; background-color: #9b59b6; } /* Фиолетовый */
+        .ball:nth-child(5) { top: 320px; left: 150px; background-color: #1abc9c; } /* Бирюзовый */
+        .ball:nth-child(6) { top: 240px; left: 188px; background-color: #e74c3c; } /* Красный */
+        .ball:nth-child(7) { top: 225px; left: 95px; background-color: #1abc9c; } /* Бирюзовый */
+        .ball:nth-child(8) { top: 305px; left: 225px; background-color: #f1c40f; } /* Желтый */
+        .ball:nth-child(9) { top: 353px; left: 108px; background-color: #3498db; } /* Синий */
+        .ball:nth-child(10) { top: 270px; left: 110px; background-color: #0000CD; } /* MediumBlue */
+        .ball:nth-child(11) { top: 320px; left: 90px; background-color: #FF4500; } /* OrangeRed */
+        .ball:nth-child(12) { top: 175px; left: 138px; background-color: #FF1493; } /* DeepPink */
+        .ball:nth-child(13) { top: 230px; left: 152px; background-color: #9ACD32; } /* YellowGreen */
+        .ball:nth-child(14) { top: 145px; left: 146px; background-color: #20B2AA; } /* LightSeaGreen */
+        .ball:nth-child(15) { top: 300px; left: 170px; background-color: #9b59b6; } /* Фиолетовый */
+
+
+        /* Добавьте больше шаров, если нужно */
+
+        .ball.active {
+            filter: brightness(1.8); /* Делает шарик ярче при мигании */
+            transform: scale(1.1); /* Легкое увеличение при мигании */
+        }
+
+        /* ----- Гирлянда ----- */
+        @keyframes garlandBlink {
+            0%, 100% { opacity: 1; box-shadow: 0 0 8px currentColor; }
+            50% { opacity: 0.3; box-shadow: none; }
+        }
+
+        .light {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: white; /* Базовый цвет */
+            z-index: 2; /* Поверх елки, под звездой */
+            animation: garlandBlink 1.5s infinite alternate; /* Базовая анимация */
+        }
+
+        /* Цвета для гирлянды */
+        .light-red { background-color: #e74c3c; }
+        .light-yellow { background-color: #f1c40f; }
+        .light-blue { background-color: #3498db; }
+        .light-green { background-color: #2ecc71; }
+
+        /* Расположение лампочек гирлянды (очень важно настроить вручную!) */
+        .garland .light:nth-child(1) { top: 146px; left: 140px; animation-delay: 0s; }
+        .garland .light:nth-child(2) { top: 225px; left: 110px; animation-delay: 0.1s; }
+        .garland .light:nth-child(3) { top: 241px; left: 185px; animation-delay: 0.2s; }
+        .garland .light:nth-child(4) { top: 317px; left: 90px; animation-delay: 0.3s; }
+        .garland .light:nth-child(5) { top: 351px; left: 235px; animation-delay: 0.4s; }
+        .garland .light:nth-child(6) { top: 185px; left: 154px; animation-delay: 0.5s; }
+        .garland .light:nth-child(7) { top: 302px; left: 230px; animation-delay: 0.6s; }
+        .garland .light:nth-child(8) { top: 270px; left: 124px; animation-delay: 0.7s; }
+        .garland .light:nth-child(9) { top: 335px; left: 156px; animation-delay: 0.8s; }
+        .garland .light:nth-child(10) { top: 351px; left: 122px; animation-delay: 0.9s; }
+        .garland .light:nth-child(11) { top: 354px; left: 49px; animation-delay: 1s; }
+        .garland .light:nth-child(12) { top: 297px; left: 180px; animation-delay: 1.1s; }
+        .garland .light:nth-child(13) { top: 127px; left: 128px; animation-delay: 0s; }
+        .garland .light:nth-child(14) { top: 160px; left: 112px; animation-delay: 0.1s; }
+        .garland .light:nth-child(15) { top: 195px; left: 195px; animation-delay: 0.2s; }
+        .garland .light:nth-child(16) { top: 195px; left: 95px; animation-delay: 0.3s; }
+        .garland .light:nth-child(17) { top: 280px; left: 235px; animation-delay: 0.4s; }
+        .garland .light:nth-child(18) { top: 127px; left: 160px; animation-delay: 0.5s; }
+        .garland .light:nth-child(19) { top: 328px; left: 260px; animation-delay: 0.6s; }
+        .garland .light:nth-child(20) { top: 160px; left: 175px; animation-delay: 0.7s; }
+        .garland .light:nth-child(21) { top: 230px; left: 212px; animation-delay: 0.8s; }
+        .garland .light:nth-child(22) { top: 230px; left: 78px; animation-delay: 0.9s; }
+        .garland .light:nth-child(23) { top: 280px; left: 52px; animation-delay: 1s; }
+        .garland .light:nth-child(24) { top: 340px; left: 20px; animation-delay: 1.1s; }
+        .garland .light:nth-child(25) { top: 380px; left: 285px; animation-delay: 1.1s; }
+        .garland .light:nth-child(26) { top: 380px; left: 1px; animation-delay: 0s; }
+        .garland .light:nth-child(27) { top: 360px; left: 275px; animation-delay: 0.1s; }
+        .garland .light:nth-child(28) { top: 360px; left: 190px; animation-delay: 0.2s; }
+        .garland .light:nth-child(29) { top: 360px; left: 160px; animation-delay: 0.3s; }
+        .garland .light:nth-child(30) { top: 280px; left: 160px; animation-delay: 0.4s; }
+        .garland .light:nth-child(31) { top: 127px; left: 160px; animation-delay: 0.5s; }
+        .garland .light:nth-child(32) { top: 300px; left: 140px; animation-delay: 0.6s; }
+        .garland .light:nth-child(33) { top: 300px; left: 75px; animation-delay: 0.7s; }
+        .garland .light:nth-child(34) { top: 230px; left: 212px; animation-delay: 0.8s; }
+        .garland .light:nth-child(35) { top: 230px; left: 78px; animation-delay: 0.9s; }
+        .garland .light:nth-child(36) { top: 280px; left: 52px; animation-delay: 1s; }
+        .garland .light:nth-child(37) { top: 340px; left: 20px; animation-delay: 1.1s; }
+        /* Добавьте больше лампочек, если нужно */
+
+        /* ----- Хлопушки ----- */
+        @keyframes confettiFall {
+            0% { transform: translate(-50%, -100%) rotate(0deg); opacity: 1; }
+            100% { transform: translate(-50%, 100vh) rotate(720deg); opacity: 0; } /* 100vh = 100% высоты viewport */
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00; /* Будет случайным */
+            border-radius: 2px;
+            animation: confettiFall 3s ease-in forwards; /* forwards - чтобы оставалось в конечном состоянии */
+            left: 50%; /* Начнется в центре, потом будет случайным */
+            top: 0; /* Важно: позиционировать от верхнего края */
+        }
+
+        /* -----
+
+Снежинки ----- */
+        @keyframes snowflakeFall {
+            0% { transform: translateY(-100%); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        .snowflake {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            animation: snowflakeFall linear infinite;
+            z-index: 9; /* Под хлопушками, но над елочкой */
+            top: 0; /* Важно: позиционировать от верхнего края */
+        }
+
+
+        button {
+            padding: 15px 30px;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+            z-index: 100; /* Чтобы кнопка была поверх всего */
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #message {
+            margin-top: 40px;
+            font-size: 24px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            z-index: 100; /* Чтобы сообщение было поверх всего */
+        }
+        #message.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="effect-container"></div> <!-- Контейнер для снежинок и хлопушек -->
+
+    <h1>🎉 С Наступающим Новым Годом, коллеги! 🎉</h1>
+
+    <div class="tree-container">
+        <div class="tree"></div>
+        <div class="star"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+        <div class="ball"></div>
+
+
+
+
+
+        <!-- Добавьте больше шаров, если нужно -->
+
+        <div class="garland">
+            <div class="light light-red"></div>
+            <div class="light light-yellow"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+            <div class="light light-red"></div>
+            <div class="light light-yellow"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+            <div class="light light-red"></div>
+            <div class="light light-yellow"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+            <div class="light light-red"></div>
+            <div class="light light-yellow"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+            <div class="light light-green"></div>
+            <div class="light light-red"></div>
+            <div class="light light-yellow"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+            <div class="light light-red"></div>
+            <div class="light light-yellow"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+            <div class="light light-red"></div>
+            <div class="light light-yellow"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+            <div class="light light-red"></div>
+            <div class="light light-yellow"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+            <div class="light light-blue"></div>
+            <div class="light light-green"></div>
+
+
+            <!-- Добавьте больше лампочек для длинной гирлянды -->
+        </div>
+    </div>
+
+    <button id="activateButton">Нажми, чтобы Елочка засияла!</button>
+
+    <h2 id="message">Желаем счастья, успехов и самых ярких моментов в Новом Году!</h2>
+
+    <audio id="christmasMusic" src="jingle_bell_rock.mp3" preload="auto"></audio>
+
+    <script>
+        const activateButton = document.getElementById('activateButton');
+        const christmasMusic = document.getElementById('christmasMusic');
+        const balls = document.querySelectorAll('.ball');
+        const message = document.getElementById('message');
+
+        let isPlaying = false;
+        let blinkInterval;
+        let messageTimeout;
+        let confettiInterval;
+        let snowInterval;
+        const effectContainer = document.getElementById('effect-container');
+        const colors = ['#e74c3c', '#f1c40f', '#3498db', '#2ecc71', '#9b59b6']; // Цвета для хлопушек
+
+        function startCelebration() {
+            if (isPlaying) return;
+
+            isPlaying = true;
+            christmasMusic.currentTime = 0;
+            christmasMusic.play().catch(e => console.error("Ошибка воспроизведения звука:", e));
+
+            blinkInterval = setInterval(() => {
+                balls.forEach(ball => {
+                    // Случайным образом мигаем шарами
+                    if (Math.random() > 0.5) {
+                        ball.classList.toggle('active');
+                    } else {
+                        ball.classList.remove('active'); // Убираем active, чтобы не было "залипаний"
+                    }
+                });
+            }, 250); // Интервал мигания (в миллисекундах)
+
+            messageTimeout = setTimeout(() => {
+                message.classList.add('show');
+            }, 3000); // Показать через 3 секунды
+
+            activateButton.textContent = "Елочка сияет! Нажми ESC, чтобы остановить.";
+            activateButton.disabled = true;
+
+            document.addEventListener('keydown', stopOnEsc);
+
+            // --- НОВЫЙ КОД: Запуск Хлопушек и Снежков ---
+            startConfetti();
+            startSnow();
+            // ---------------------------------------------
+        }
+
+        function stopCelebration() {
+            if (!isPlaying) return;
+
+            isPlaying = false;
+            christmasMusic.pause();
+            clearInterval(blinkInterval);
+            clearTimeout(messageTimeout);
+            balls.forEach(ball => ball.classList.remove('active')); // Возвращаем шары в исходное состояние
+            message.classList.remove('show'); // Скрываем сообщение
+
+            activateButton.textContent = "Нажми, чтобы Елочка засияла!";
+            activateButton.disabled = false;
+
+            document.removeEventListener('keydown', stopOnEsc);
+
+            // --- НОВЫЙ КОД: Остановка Хлопушек и Снежков ---
+            stopConfetti();
+            stopSnow();
+            // ---------------------------------------------
+        }
+
+        function stopOnEsc(event) {
+            if (event.key === 'Escape') {
+                stopCelebration();
+            }
+        }
+
+        // --- Функции для Хлопушек ---
+        function createConfetti() {
+            const confetti = document.createElement('div');
+            confetti.classList.add('confetti');
+            confetti.style.left = `${Math.random() * 100}%`;
+            confetti.style.top = `${Math.random() * -20}%`; // Начинаем чуть выше экрана
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDuration = `${2 + Math.random() * 2}s`;
+            confetti.style.animationDelay = `${Math.random() * 0.5}s`;
+
+            effectContainer.appendChild(confetti);
+
+            confetti.addEventListener('animationend', () => {
+                confetti.remove();
+            });
+        }
+
+        function startConfetti() {
+            for (let i = 0; i < 50; i++) { // Стартовый "взрыв" хлопушек
+                setTimeout(createConfetti, Math.random() * 1000);
+            }
+            confettiInterval = setInterval(createConfetti, 100); // Постоянная генерация
+        }
+
+        function stopConfetti() {
+            clearInterval(confettiInterval);
+            effectContainer.querySelectorAll('.confetti').forEach(c => c.remove());
+        }
+
+        // --- Функции для Снежинок ---
+        function createSnowflake() {
+            const snowflake = document.createElement('div');
+            snowflake.classList.add('snowflake');
+            snowflake.style.left = `${Math.random() * 100}%`;
+            snowflake.style.animationDuration = `${5 + Math.random() * 5}s`; // Длительность падения 5-10 сек
+            snowflake.style.animationDelay = `-${Math.random() * 5}s`; // Чтобы некоторые уже падали
+            snowflake.style.opacity = `${0.5 + Math.random() * 0.5}`;
+            snowflake.style.transform = `scale(${0.5 + Math.random() * 0.5})`; // Размер снежинки
+
+            effectContainer.appendChild(snowflake);
+
+            snowflake.addEventListener('animationend', () => {
+                snowflake.remove();
+            });
+        }
+
+        function startSnow() {
+            snowInterval = setInterval(createSnowflake, 150); // Генерируем новую снежинку каждые 150мс
+        }
+
+        function stopSnow() {
+            clearInterval(snowInterval);
+            effectContainer.querySelectorAll('.snowflake').forEach(s => s.remove());
+        }
+
+
+        // Активация по нажатию кнопки
+        activateButton.addEventListener('click', startCelebration);
+
+        // Активация по комбинации Ctrl+9
+        document.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.key === '9') {
+                event.preventDefault();
+                startCelebration();
+            }
+        });
+
+        // Остановка музыки, когда она заканчивается сама (по желанию можно зациклить)
+        christmasMusic.addEventListener('ended', () => {
+            console.log("Музыка закончилась.");
+            // stopCelebration(); // Если нужно остановить все
+            // christmasMusic.currentTime = 0; // Для зацикливания музыки
+            // christmasMusic.play().catch(e => console.error("Ошибка зацикливания:", e));
+        });
+
+        console.log("Страница загружена. Нажмите кнопку или Ctrl+9!");
+
+    </script>
+</body>
+</html>
